@@ -1,0 +1,10 @@
+K 10
+svn:ignore
+V 45
+log.txt
+.classpath
+.project
+target
+.settings
+
+END

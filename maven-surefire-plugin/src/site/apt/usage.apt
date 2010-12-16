@@ -1,0 +1,70 @@
+  ------
+  Usage
+  ------
+  Brett Porter
+  Allan Ramirez
+  ------
+  2010-01-09
+  ------
+
+~~ Licensed to the Apache Software Foundation (ASF) under one
+~~ or more contributor license agreements.  See the NOTICE file
+~~ distributed with this work for additional information
+~~ regarding copyright ownership.  The ASF licenses this file
+~~ to you under the Apache License, Version 2.0 (the
+~~ "License"); you may not use this file except in compliance
+~~ with the License.  You may obtain a copy of the License at
+~~
+~~   http://www.apache.org/licenses/LICENSE-2.0
+~~
+~~ Unless required by applicable law or agreed to in writing,
+~~ software distributed under the License is distributed on an
+~~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+~~ KIND, either express or implied.  See the License for the
+~~ specific language governing permissions and limitations
+~~ under the License.
+
+~~ NOTE: For help with the syntax of this file, see:
+~~ http://maven.apache.org/doxia/references/apt-format.html
+
+Usage
+
+  The Surefire Plugin can be invoked by calling the <<<test>>> phase of the
+  build lifecycle.
+
++---+
+mvn test
++---+
+
+* Using different testing providers
+
+  Tests in your test source directory can be any combination of the following:
+
+   * TestNG
+
+   * JUnit (3.8 or 4.x)
+
+   * POJO
+
+  Which providers are available is controlled simply by the inclusion of the
+  appropriate dependencies (ie, junit:junit for JUnit, org.testng:testng 4.7+
+  for TestNG). Since this is required to compile the test classes anyway, no
+  additional configuration is required.
+
+  Note that any normal Surefire integration works identically no matter which
+  providers are in use - so you can still produce a Cobertura report and a
+  Surefire report on your project web site for your TestNG tests,
+  for example.
+
+  The POJO provider above allows you to write tests that do not depend on
+  JUnit. They behave in the same way, running all <<<test*>>> methods that are
+  public in the class, but the API dependency is not required. To perform
+  assertions, the JDK 1.4 <<<assert>>> keyword can be used, or you can use
+  <<<org.apache.maven.surefire.assertion.Assert>>>.
+
+  All of the providers support the Surefire Plugin parameter configurations.
+  However, there are additional options available if you are running TestNG
+  tests (including if you are using TestNG to execute your JUnit tests, which
+  occurs by default if both are present in Surefire).
+
+  See {{{./examples/testng.html} Using TestNG}} for more information.

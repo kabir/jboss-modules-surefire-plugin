@@ -1,0 +1,100 @@
+  ------
+  Using System Properties
+  ------
+  Allan Ramirez
+  Dan Tran
+  ------
+  2010-01-09
+  ------
+
+Using System Properties
+
+  There are two ways to add a list of system properties to Surefire:
+
+* systemPropertyVariables
+
+  This configuration is the replacement of the deprecated <<<systemProperties>>>.  It can accept any value
+  from Maven's properties that can be converted <<to String value>>.
+
++---+
+<project>
+  [...]
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          <systemPropertyVariables>
+            <propertyName>propertyValue</propertyName>
+            <buildDirectory>\${project.build.directory}</buildDirectory>
+            [...]
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  [...]
+</project>
++---+
+
+
+* systemProperties ( deprecated )
+
++---+
+<project>
+  [...]
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          <systemProperties>
+            <property>
+              <name>propertyName</name>
+              <value>propertyValue</value>
+            </property>
+            [...]
+          </systemProperties>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  [...]
+</project>
++---+
+
+  Take note that only <<String valued>> properties can be passed as system
+  properties. Any attempt to pass any other Maven variable type (i.e. <<<List>>>
+  or a <<<URL>>> variable) will cause the variable expression to be passed
+  literally (unevaluated). So having the example below:
+
++---+
+<project>
+  [...]
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${project.version}</version>
+        <configuration>
+          <systemProperties>
+            <property>
+              <name>buildDir</name>
+              <value>\${project.build.outputDirectory}</value>
+            </property>
+          </systemProperties>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  [...]
+</project>
++---+
+
+  will literally pass <<$\{project.build.outputDirectory\}>> because the value
+  of that expression is a <<<File>>>, not a <<<String>>>.
