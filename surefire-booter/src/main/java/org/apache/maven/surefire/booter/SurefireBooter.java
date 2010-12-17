@@ -26,6 +26,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -320,20 +322,7 @@ public class SurefireBooter
             // The test classloader must be constructed first to avoid issues with commons-logging until we properly
             // separate the TestNG classloader
             ClassLoader testsClassLoader;
-            String testClassPath = getTestClassPathAsString();
-            System.setProperty( "surefire.test.class.path", testClassPath );
-            if ( useManifestOnlyJar() )
-            {
-                testsClassLoader = getClass().getClassLoader(); // ClassLoader.getSystemClassLoader()
-                // SUREFIRE-459, trick the app under test into thinking its classpath was conventional
-                // (instead of a single manifest-only jar) 
-                System.setProperty( "surefire.real.class.path", System.getProperty( "java.class.path" ) );
-                System.setProperty( "java.class.path", testClassPath );
-            }
-            else
-            {
-                testsClassLoader = createClassLoader( classPathUrls, null, childDelegation );
-            }
+            testsClassLoader = this.getClass().getClassLoader();
             
             ClassLoader surefireClassLoader = createClassLoader( surefireClassPathUrls, testsClassLoader );
 
@@ -914,6 +903,7 @@ public class SurefireBooter
     public static void main( String[] args )
         throws Throwable
     {
+        
         // noinspection CatchGenericClass,OverlyBroadCatchBlock
         try
         {

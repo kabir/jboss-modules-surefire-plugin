@@ -27,15 +27,20 @@
     <relativePath>../pom/maven/pom.xml</relativePath>
   </parent>
 
-  <groupId>org.apache.maven.surefire</groupId>
+  <groupId>org.jboss.maven.surefire.modular</groupId>
   <artifactId>surefire</artifactId>
-  <version>2.6</version>
+  <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>SureFire</name>
   <description>Surefire is a test framework project.</description>
   <url>http://maven.apache.org/surefire</url>
   <inceptionYear>2004</inceptionYear>
+  
+  <properties>
+    <version.junit.junit>4.8.1</version.junit.junit>
+    <version.jboss.modules>1.0.0.Beta9</version.jboss.modules>
+  </properties>
 
   <mailingLists>
     <mailingList>
@@ -87,14 +92,10 @@
   </contributors>
 
   <modules>
-    <module>surefire-api</module>
     <module>surefire-booter</module>
-    <module>surefire-providers</module>
     <module>maven-surefire-common</module>
     <module>maven-surefire-plugin</module>
-    <module>maven-failsafe-plugin</module>
-    <module>maven-surefire-report-plugin</module>
-    <module>surefire-integration-tests</module>
+    <module>test</module>
   </modules>
 
   <scm>
@@ -115,14 +116,14 @@
         <version>2.6</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.maven.surefire</groupId>
+        <groupId>org.jboss.maven.surefire.modular</groupId>
         <artifactId>surefire-booter</artifactId>
-        <version>2.6</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.maven.surefire</groupId>
+        <groupId>org.jboss.maven.surefire.modular</groupId>
         <artifactId>maven-surefire-common</artifactId>
-        <version>2.6</version>
+        <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
@@ -164,25 +165,53 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-plugin-api</artifactId>
+        <version>3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-artifact</artifactId>
+        <version>2.0.9</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.shared</groupId>
+        <artifactId>maven-dependency-tree</artifactId>
+        <version>1.2</version>
+      </dependency>
+      <dependency>
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-utils</artifactId>
         <version>2.0.5</version>
       </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${version.junit.junit}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jboss.modules</groupId>
+        <artifactId>jboss-modules</artifactId>
+        <version>${version.jboss.modules}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>jmock</groupId>
+        <artifactId>jmock</artifactId>
+        <version>1.0.1</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
+    
+    <!--dependency>
       <groupId>jmock</groupId>
       <artifactId>jmock</artifactId>
       <version>1.0.1</version>
       <scope>test</scope>
-    </dependency>
+    </dependency-->
   </dependencies>
 
   <build>
@@ -190,21 +219,27 @@
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.3</source>
-          <target>1.3</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.1.2</version>
+        <inherited>true</inherited>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>         
     </plugins>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.5</version>
-          <configuration>
-            <!-- NOTE: Be sure to isolate the Surefire version under test from the version running the tests! -->
-            <useSystemClassLoader>false</useSystemClassLoader>
-          </configuration>
-        </plugin>
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
           <configuration>

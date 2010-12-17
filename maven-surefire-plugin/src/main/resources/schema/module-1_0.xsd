@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2010, Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags. See the copyright.txt file in the
+  ~ distribution for a full listing of individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="urn:jboss:surefire-module:1.0"
+            xmlns="urn:jboss:surefire-module:1.0"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            version="1.0">
+
+    <!-- Root element -->
+    <xsd:element name="modules" type="modulesType"/>
+
+    <xsd:complexType name="modulesType">
+        <xsd:annotation>
+        	<xsd:documentation><![CDATA[By default a module called 'jboss.surefire.module' is added automatically by the plugin. It's contents under the created modules root, 
+        	using jboss-modules 1.0 look like this:
+	 <module name="jboss.surefire.module">
+	     <main-class name="org.apache.maven.surefire.booter.SurefireBooter"/>
+	     <resources>
+	         <resource-root path="$org.apache.maven.surefire:surefire-api$"/>
+	         <resource-root path="$org.jboss.maven.surefire.modular:surefire-booter$"/>
+	         <resource-root path="$junit:junit$"/>>
+	         <resource-root path="$$CLASSES$$"/>
+	         <resource-root path="$$TEST.CLASSES$$"/>
+	     </resources>
+	     
+	     $Dependencies$
+	 </module>
+The following substitutions happen:
+   * $groupId:artifactId$ gets the dependency jar from maven using the version used by the project using this plugin
+   * $$CLASS$$ is the target/classes directory of the project using this plugin
+   * $$TEST.CLASSES$$ is the target/test-classes directory of the project using this plugin
+   
+If a test-module-dependencies sub-element is included its contents will replace the $Dependencies$ marker.]]>
+                        	
+             </xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence maxOccurs="1">
+            <xsd:element name="test-module-dependencies" type="testModuleDependenciesType" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="module" type="moduleType" minOccurs="0" maxOccurs="unbounded"/>
+        </xsd:sequence>
+        <xsd:attribute name="targetNs" type="xsd:string" use="required"/>
+    </xsd:complexType>
+    
+    <xsd:complexType name="testModuleDependenciesType">
+        <xsd:annotation>
+            <xsd:documentation><![CDATA[Defines the module using the schema of the target jboss-modules version. It is not tied to any schema but in jboss-modules 1.0
+it should have the form
+     <test-module-dependencies>
+         <module name="my.first.dependency"/>
+         <module name="my.second.dependency"/>
+     </test-module-dependencies>
+     
+Any sub-elements/attributes valid for module dependencies in jboss-modules are allowed.]]>              
+            </xsd:documentation>
+        </xsd:annotation>
+        
+        <xsd:all/>
+        <xsd:anyAttribute/>
+        
+    </xsd:complexType>
+
+    <xsd:complexType name="moduleType">
+        <xsd:annotation>
+        	<xsd:documentation><![CDATA[Defines additional test modules using the schema of the target jboss-modules version, for jboss modules 1.0 it should have the form
+     <module name="my.module">
+        <resources>
+            <resource-root path="$org.jboss.logging:jboss-logging$"/>
+        </resources>
+     </module>        	
+     
+Any sub-elements/attributes valid for module elements in jboss-modules are allowed]]>   
+        	</xsd:documentation>
+        </xsd:annotation>
+        
+        <xsd:all/>
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:anyAttribute/>
+    </xsd:complexType>
+</xsd:schema>
+

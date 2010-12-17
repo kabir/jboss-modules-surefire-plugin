@@ -54,6 +54,10 @@ public abstract class AbstractSurefireMojo
 
     private static final String PLAIN_REPORT_FORMAT = "plain";
 
+    public static final String PROPER_SUREFIRE_VERSION = "2.6";
+    
+
+
     // common field getters/setters
 
     // common code
@@ -198,8 +202,8 @@ public abstract class AbstractSurefireMojo
         throws MojoExecutionException, MojoFailureException
     {
         SurefireBooter surefireBooter = new SurefireBooter();
-
-        Artifact surefireArtifact = (Artifact) getPluginArtifactMap().get( "org.apache.maven.surefire:surefire-booter" );
+        
+        Artifact surefireArtifact = (Artifact) getPluginArtifactMap().get( "org.jboss.maven.surefire.modular:surefire-booter" );
         if ( surefireArtifact == null )
         {
             throw new MojoExecutionException( "Unable to locate surefire-booter in the list of plugin artifacts" );
@@ -244,25 +248,25 @@ public abstract class AbstractSurefireMojo
 
                 // The plugin uses a JDK based profile to select the right testng. We might be explicity using a
                 // different one since its based on the source level, not the JVM. Prune using the filter.
-                addProvider( surefireBooter, "surefire-testng", surefireArtifact.getBaseVersion(), testNgArtifact );
+                addProvider( surefireBooter, "surefire-testng", PROPER_SUREFIRE_VERSION, testNgArtifact );
             }
             else if ( junitArtifact != null && isAnyJunit4( junitArtifact ) )
             {
                 if ( isAnyConcurrencySelected() && isJunit47Compatible( junitArtifact ) )
                 {
                     convertJunitCoreParameters();
-                    addProvider( surefireBooter, "surefire-junit47", surefireArtifact.getBaseVersion(), null );
+                    addProvider( surefireBooter, "surefire-junit47", PROPER_SUREFIRE_VERSION, null );
                 }
                 else
                 {
-                    addProvider( surefireBooter, "surefire-junit4", surefireArtifact.getBaseVersion(), null );
+                    addProvider( surefireBooter, "surefire-junit4", PROPER_SUREFIRE_VERSION, null );
                 }
             }
             else
             {
                 // add the JUnit provider as default - it doesn't require JUnit to be present,
                 // since it supports POJO tests.
-                addProvider( surefireBooter, "surefire-junit", surefireArtifact.getBaseVersion(), null );
+                addProvider( surefireBooter, "surefire-junit", PROPER_SUREFIRE_VERSION, null );
             }
         }
         catch ( ArtifactNotFoundException e )
@@ -429,7 +433,7 @@ public abstract class AbstractSurefireMojo
         ForkConfiguration fork = new ForkConfiguration();
 
         fork.setForkMode( getForkMode() );
-
+        
         processSystemProperties( !fork.isForking() );
 
         if ( getLog().isDebugEnabled() )
@@ -491,6 +495,8 @@ public abstract class AbstractSurefireMojo
                 }
             }
         }
+        
+        fork = processForkConfiguration(fork);
 
         surefireBooter.setFailIfNoTests( getFailIfNoTests() == null ? false : getFailIfNoTests().booleanValue() );
 
@@ -523,6 +529,8 @@ public abstract class AbstractSurefireMojo
         throws DependencyResolutionRequiredException, MojoExecutionException
     {
         List classpath = new ArrayList( 2 + getProject().getArtifacts().size() );
+        
+        
 
         classpath.add( getTestClassesDirectory().getAbsolutePath() );
 
@@ -832,4 +840,10 @@ public abstract class AbstractSurefireMojo
             getLog().warn( "useSystemClassloader setting has no effect when not forking" );
         }
     }
+    
+    //New methods
+    protected ForkConfiguration processForkConfiguration(ForkConfiguration forkConfiguration)  throws MojoExecutionException {
+        return forkConfiguration;
+    }
+    
 }

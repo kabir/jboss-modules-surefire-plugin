@@ -67,6 +67,10 @@ public class ForkConfiguration
     private boolean debug;
     
     private String debugLine;
+    
+    private String jbossModulesPath;
+    
+    private String jbossModuleRoots;
 
     public void setForkMode( String forkMode )
     {
@@ -123,6 +127,14 @@ public class ForkConfiguration
         this.debugLine = debugLine;
     }
 
+    public void setJBossModulesPath(String jbossModulesPath) {
+        this.jbossModulesPath = jbossModulesPath;
+    }
+    
+    public void setJBossModuleRoots(String jbossModuleRoots) {
+        this.jbossModuleRoots = jbossModuleRoots;
+    }
+    
     public void setEnvironmentVariables( Map environmentVariables )
     {
         this.environmentVariables = new HashMap( environmentVariables );
@@ -159,7 +171,7 @@ public class ForkConfiguration
         Commandline cli = new Commandline();
 
         cli.setExecutable( jvmExecutable );
-
+        
         if ( argLine != null )
         {
             cli.createArg().setLine( argLine );
@@ -184,31 +196,37 @@ public class ForkConfiguration
             cli.createArg().setLine( debugLine );
         }
 
-        if ( useJar )
-        {
-            File jarFile;
-            try
-            {
-                jarFile = createJar( classPath );
-            }
-            catch ( IOException e )
-            {
-                throw new SurefireBooterForkException( "Error creating archive file", e );
-            }
-
-            cli.createArg().setValue( "-jar" );
-
-            cli.createArg().setValue( jarFile.getAbsolutePath() );
-        }
-        else
-        {
-            cli.createArg().setValue( "-classpath" );
-
-            cli.createArg().setValue( StringUtils.join( classPath.iterator(), File.pathSeparator ) );
-
-            cli.createArg().setValue( SurefireBooter.class.getName() );
-        }
-
+//        if ( useJar )
+//        {
+//            File jarFile;
+//            try
+//            {
+//                jarFile = createJar( classPath );
+//            }
+//            catch ( IOException e )
+//            {
+//                throw new SurefireBooterForkException( "Error creating archive file", e );
+//            }
+//
+//            cli.createArg().setValue( "-jar" );
+//
+//            cli.createArg().setValue( jarFile.getAbsolutePath() );
+//        }
+//        else
+//        {
+//            cli.createArg().setValue( "-classpath" );
+//
+//            cli.createArg().setValue( StringUtils.join( classPath.iterator(), File.pathSeparator ) );
+//
+//            cli.createArg().setValue( SurefireBooter.class.getName() );
+//        }
+        
+        cli.createArg().setValue("-jar");
+        cli.createArg().setValue(jbossModulesPath);
+        cli.createArg().setValue("-mp");
+        cli.createArg().setValue(jbossModuleRoots);
+        cli.createArg().setValue("jboss.surefire.module");
+        
         cli.setWorkingDirectory( workingDirectory.getAbsolutePath() );
 
         return cli;

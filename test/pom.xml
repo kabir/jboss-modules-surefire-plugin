@@ -1,0 +1,75 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jboss.maven.surefire.modular</groupId>
+    <artifactId>surefire</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+  <groupId>org.jboss.maven.surefire.modular</groupId>
+  <artifactId>jboss-surefire-plugin-test</artifactId>
+
+  <name>Test JBoss Modular Surefire Plugin</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.6</version>
+        <!--  Disable the standard surefire plugin since that runs tests without modular classloading -->
+        <configuration>
+           <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.jboss.maven.surefire.modular</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+            <roots>
+               <!-- Remove hardcoding once done  -->
+               <root>/Users/kabir/sourcecontrol/temp/thomas/jboss-as/build/target/jboss-7.0.0.Alpha2/modules</root>
+            </roots>
+        </configuration>
+      </plugin>      
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.modules</groupId>
+      <artifactId>jboss-modules</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Some jars to test what we can load from modules - it does not really matter what they are-->
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+      <version>3.0.0.Beta3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
+      <version>2.2.17.GA</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.logging</groupId>
+          <artifactId>jboss-logging-spi</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+  </dependencies>  
+</project>

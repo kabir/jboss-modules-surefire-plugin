@@ -20,19 +20,32 @@ package org.apache.maven.plugin.surefire;
  */
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.ArtifactCollector;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
+import org.apache.maven.artifact.resolver.filter.ScopeArtifactFilter;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.surefire.parser.ModulesProcessor;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.artifact.filter.PatternIncludesArtifactFilter;
+import org.apache.maven.shared.dependency.tree.DependencyTreeBuilder;
+import org.apache.maven.surefire.booter.ForkConfiguration;
 import org.apache.maven.surefire.booter.SurefireBooter;
 import org.apache.maven.surefire.booter.SurefireBooterForkException;
 import org.apache.maven.surefire.booter.SurefireExecutionException;
@@ -558,12 +571,69 @@ public class SurefirePlugin
      */
     private ToolchainManager toolchainManager;
 
+    ////////////////////////////////////////////////////
+    //JBoss Modules configuration parameters
+    
+    
+    /**
+     * The existing module root directories
+     * 
+     * @parameter
+     */
+    private List<File> roots;
+    
+    /**
+     * If true (default) clean out the modules directory each time we run the tests.
+     * 
+     * @parameter expression="${jboss.modules.clean}" default-value="true"
+     */
+    private boolean cleanModulesDirectory;
+    
+    /**
+     * The absolute path of the modules output directory created from {@link #moduleDefinitionFile}. The default is target/modules under outputDirectory
+     *
+     * @parameter expression="${jboss.modules.directory}" default-value="${project.build.directory}/modules"
+     */
+    protected File modulesDirectory;
+    
+    /**
+     * <p>
+     * The path of the module definition file.
+     * </p>
+     * <p>
+     * The default is under target/test-classes/modules/module-def.xml.
+
+     * @parameter expression="${jboss.modules.definition}" default-value="${project.build.testOutputDirectory}/modules/module-def.xml"
+     * @required
+     */
+    private File moduleDefinitionFile;
+
+    /**
+     * The artifact collector to use.
+     *
+     * @component
+     * @required
+     * @readonly
+     */
+    private ArtifactCollector artifactCollector;
+
+    /**
+     * The dependency tree builder to use.
+     *
+     * @component
+     * @required
+     * @readonly
+     */
+    private DependencyTreeBuilder dependencyTreeBuilder;
+
 
     public void execute()
         throws MojoExecutionException, MojoFailureException
     {
         if ( verifyParameters() )
         {
+            createJBossModulesDirectory();
+            
             SurefireBooter surefireBooter = constructSurefireBooter();
 
             getLog().info(
@@ -1220,5 +1290,108 @@ public class SurefirePlugin
         return parallelMavenExecution  != null && parallelMavenExecution.booleanValue();
     }
     
+    
+    
+    //Forked methods
+    public List generateTestClasspath() throws DependencyResolutionRequiredException, MojoExecutionException {
+        return new ArrayList();
+    }
+    
+    private Set filterArtifacts( Set artifacts, ArtifactFilter filter )
+    {
+        Set filteredArtifacts = new LinkedHashSet();
 
+        for ( Iterator iter = artifacts.iterator(); iter.hasNext(); )
+        {
+            Artifact artifact = (Artifact) iter.next();
+            if ( ! filter.include( artifact ) )
+            {
+                filteredArtifacts.add( artifact );
+            }
+        }
+
+        return filteredArtifacts;
+    }
+    
+    private File findJBossModules() throws MojoExecutionException
+    {
+        Set classpathArtifacts = getProject().getArtifacts();
+
+        if ( getClasspathDependencyScopeExclude() != null && !getClasspathDependencyScopeExclude().equals( "" ) )
+        {
+            ArtifactFilter dependencyFilter = new ScopeArtifactFilter( getClasspathDependencyScopeExclude() );
+            classpathArtifacts = this.filterArtifacts( classpathArtifacts, dependencyFilter );
+        }
+
+        if ( getClasspathDependencyExcludes() != null )
+        {
+            ArtifactFilter dependencyFilter = new PatternIncludesArtifactFilter( getClasspathDependencyExcludes() );
+            classpathArtifacts = this.filterArtifacts( classpathArtifacts, dependencyFilter );
+        }
+
+        for ( Iterator iter = classpathArtifacts.iterator(); iter.hasNext(); )
+        {
+            Artifact artifact = (Artifact) iter.next();
+            
+            if (artifact.getGroupId().equals("org.jboss.modules") && artifact.getArtifactId().equals("jboss-modules")) 
+            {
+                if ( artifact.getArtifactHandler().isAddedToClasspath() )
+                {
+                    File file = artifact.getFile();
+                    if ( file != null )
+                    {
+                        return file;
+                    }
+                }
+            }
+        }
+        
+        throw new MojoExecutionException("Could not find org.jboss.modules:modules, make sure it is included in your pom's dependencies");
+    }
+    
+    protected ForkConfiguration processForkConfiguration(ForkConfiguration forkConfiguration) throws MojoExecutionException {
+        forkConfiguration.setJBossModulesPath(findJBossModules().getAbsolutePath());
+        
+        StringBuilder sb = new StringBuilder();
+        for (Iterator it = roots.iterator() ; it.hasNext() ; ) {
+            File file = new File((String)it.next());
+            if (!file.exists()) {
+                throw new MojoExecutionException("Roots value does not exist: " + file.getAbsolutePath());
+            }
+            if (sb.length() > 0) {
+                sb.append(File.pathSeparatorChar);
+            }
+            sb.append(file.getAbsolutePath());
+        }
+        
+        if (sb.length() > 0) {
+            sb.insert(0, File.pathSeparatorChar);
+        }
+        sb.insert(0, modulesDirectory);
+        
+        forkConfiguration.setJBossModuleRoots(sb.toString());
+        
+        return super.processForkConfiguration(forkConfiguration);
+    }
+
+    /////////////////////////////////////////////////////////////
+    //JBoss modules specific methods
+    
+    void createJBossModulesDirectory() throws MojoExecutionException {
+        ModulesProcessor processor = new ModulesProcessor(
+                getLog(), 
+                project, 
+                localRepository, 
+                artifactFactory, 
+                metadataSource, 
+                artifactCollector, 
+                testClassesDirectory, 
+                classesDirectory, 
+                moduleDefinitionFile,
+                cleanModulesDirectory,
+                modulesDirectory, 
+                dependencyTreeBuilder);
+        
+        processor.createModulesDirectory();
+    }    
 }
