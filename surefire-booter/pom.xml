@@ -86,6 +86,12 @@
         <configuration>
           <!-- NOTE: Be sure to isolate the Surefire version under test from the version running the tests! -->
           <useSystemClassLoader>false</useSystemClassLoader>
+         <systemProperties>
+            <property>
+                <name>version.in.pom</name>
+                <value>${project.version}</value>
+            </property>
+         </systemProperties>
         </configuration>
       </plugin>
     </plugins>

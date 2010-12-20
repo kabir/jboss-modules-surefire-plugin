@@ -18,6 +18,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.shared.artifact.filter.PatternIncludesArtifactFilter;
 import org.apache.maven.surefire.booter.ForkConfiguration;
 import org.apache.maven.surefire.booter.SurefireBooter;
+import org.apache.maven.surefire.jboss.config.Versions;
 import org.apache.maven.surefire.report.BriefConsoleReporter;
 import org.apache.maven.surefire.report.BriefFileReporter;
 import org.apache.maven.surefire.report.ConsoleReporter;
@@ -53,14 +54,6 @@ public abstract class AbstractSurefireMojo
     private static final String BRIEF_REPORT_FORMAT = "brief";
 
     private static final String PLAIN_REPORT_FORMAT = "plain";
-
-    public static final String PROPER_SUREFIRE_VERSION = "2.6";
-    
-
-
-    // common field getters/setters
-
-    // common code
 
     protected abstract String getPluginName();
 
@@ -248,25 +241,25 @@ public abstract class AbstractSurefireMojo
 
                 // The plugin uses a JDK based profile to select the right testng. We might be explicity using a
                 // different one since its based on the source level, not the JVM. Prune using the filter.
-                addProvider( surefireBooter, "surefire-testng", PROPER_SUREFIRE_VERSION, testNgArtifact );
+                addProvider( surefireBooter, "surefire-testng", Versions.PROPER_SUREFIRE_VERSION, testNgArtifact );
             }
             else if ( junitArtifact != null && isAnyJunit4( junitArtifact ) )
             {
                 if ( isAnyConcurrencySelected() && isJunit47Compatible( junitArtifact ) )
                 {
                     convertJunitCoreParameters();
-                    addProvider( surefireBooter, "surefire-junit47", PROPER_SUREFIRE_VERSION, null );
+                    addProvider( surefireBooter, "surefire-junit47", Versions.PROPER_SUREFIRE_VERSION, null );
                 }
                 else
                 {
-                    addProvider( surefireBooter, "surefire-junit4", PROPER_SUREFIRE_VERSION, null );
+                    addProvider( surefireBooter, "surefire-junit4", Versions.PROPER_SUREFIRE_VERSION, null );
                 }
             }
             else
             {
                 // add the JUnit provider as default - it doesn't require JUnit to be present,
                 // since it supports POJO tests.
-                addProvider( surefireBooter, "surefire-junit", PROPER_SUREFIRE_VERSION, null );
+                addProvider( surefireBooter, "surefire-junit", Versions.PROPER_SUREFIRE_VERSION, null );
             }
         }
         catch ( ArtifactNotFoundException e )
