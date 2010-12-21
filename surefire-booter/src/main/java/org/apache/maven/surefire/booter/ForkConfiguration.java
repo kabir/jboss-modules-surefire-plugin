@@ -248,9 +248,9 @@ public class ForkConfiguration
                 throw new SurefireBooterForkException("Error creating URL from file");
             }
         }
-//        if (systemProperties.containsKey("org.jboss.boot.log.file")) {
-//            cli.createArg().setValue("-Dorg.jboss.boot.log.file=" + systemProperties.getProperty("org.jboss.boot.log.file"));
-//        }
+        if (systemProperties != null && systemProperties.containsKey("org.jboss.boot.log.file")) {
+            cli.createArg().setValue("-Dorg.jboss.boot.log.file=" + systemProperties.getProperty("org.jboss.boot.log.file"));
+        }
         
         cli.createArg().setValue("-jar");
         cli.createArg().setValue(jbossModulesJar);
