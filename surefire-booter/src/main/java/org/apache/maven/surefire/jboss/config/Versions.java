@@ -30,6 +30,6 @@ public class Versions {
 
     public static final String PROPER_SUREFIRE_VERSION = "2.6";
     
-    public static final String PLUGIN_FORK_VERSION = "1.0.0-SNAPSHOT"; 
+    public static final String PLUGIN_FORK_VERSION = "1.0.0.Alpha1"; 
 
 }
