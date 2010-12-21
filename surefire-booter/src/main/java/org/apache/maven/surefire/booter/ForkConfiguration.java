@@ -24,8 +24,10 @@ import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.cli.Commandline;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -68,7 +70,11 @@ public class ForkConfiguration
     
     private String debugLine;
     
-    private String jbossModulesPath;
+    private String jbossModulesJar;
+    
+    private String logModule; 
+    
+    private File logConfiguration;
     
     private String jbossModuleRoots;
 
@@ -127,10 +133,18 @@ public class ForkConfiguration
         this.debugLine = debugLine;
     }
 
-    public void setJBossModulesPath(String jbossModulesPath) {
-        this.jbossModulesPath = jbossModulesPath;
+    public void setJBossModulesJar(String jbossModulesJar) {
+        this.jbossModulesJar = jbossModulesJar;
     }
     
+    public void setLogModule(String logModule) {
+        this.logModule = logModule;
+    }
+    
+    public void setLogConfiguration(File logConfiguration) {
+        this.logConfiguration = logConfiguration;
+    }
+
     public void setJBossModuleRoots(String jbossModuleRoots) {
         this.jbossModuleRoots = jbossModuleRoots;
     }
@@ -221,12 +235,32 @@ public class ForkConfiguration
 //            cli.createArg().setValue( SurefireBooter.class.getName() );
 //        }
         
+        //Handle special system properties that need to be available in jboss-modules Main to set up logging, before
+        //surefire reads the properties file        
+        if (logConfiguration != null) {
+            if (!logConfiguration.exists()) {
+                throw new SurefireBooterForkException("Invalid value for -Dlogging.configuration. File not found: " + logConfiguration.getAbsolutePath());
+            }
+            
+            try {
+                cli.createArg().setValue("-Dlogging.configuration=" + logConfiguration.toURI().toURL());
+            } catch (MalformedURLException e) {
+                throw new SurefireBooterForkException("Error creating URL from file");
+            }
+        }
+//        if (systemProperties.containsKey("org.jboss.boot.log.file")) {
+//            cli.createArg().setValue("-Dorg.jboss.boot.log.file=" + systemProperties.getProperty("org.jboss.boot.log.file"));
+//        }
+        
         cli.createArg().setValue("-jar");
-        cli.createArg().setValue(jbossModulesPath);
+        cli.createArg().setValue(jbossModulesJar);
         cli.createArg().setValue("-mp");
         cli.createArg().setValue(jbossModuleRoots);
+        if (logModule != null) {
+            cli.createArg().setValue("-logmodule");
+            cli.createArg().setValue(logModule);
+        }
         cli.createArg().setValue("jboss.surefire.module");
-        
         cli.setWorkingDirectory( workingDirectory.getAbsolutePath() );
 
         return cli;

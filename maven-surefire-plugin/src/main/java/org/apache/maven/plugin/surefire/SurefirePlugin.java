@@ -594,7 +594,21 @@ public class SurefirePlugin
      *
      * @parameter expression="${jboss.modules.directory}" default-value="${project.build.directory}/modules"
      */
-    protected File modulesDirectory;
+    private File modulesDirectory;
+    
+    /**
+     * The name of the -logmodule parameter to JBoss Modules if any
+     * 
+     * @parameter expression="${jboss.modules.logmodule}"
+     */
+    private String logModule;
+    
+    /**
+     * The JBoss logging configuration if any. This must be set if the target project uses jboss logging
+     * 
+     * @parameter expression="${logging.configuration}
+     */
+    private File logConfiguration;
     
     /**
      * <p>
@@ -1313,7 +1327,7 @@ public class SurefirePlugin
         return filteredArtifacts;
     }
     
-    private File findJBossModules() throws MojoExecutionException
+    private File findJBossModulesJar() throws MojoExecutionException
     {
         Set classpathArtifacts = getProject().getArtifacts();
 
@@ -1348,9 +1362,14 @@ public class SurefirePlugin
         
         throw new MojoExecutionException("Could not find org.jboss.modules:modules, make sure it is included in your pom's dependencies");
     }
+
+    /////////////////////////////////////////////////////////////
+    //JBoss modules specific methods
     
     protected ForkConfiguration processForkConfiguration(ForkConfiguration forkConfiguration) throws MojoExecutionException {
-        forkConfiguration.setJBossModulesPath(findJBossModules().getAbsolutePath());
+        forkConfiguration.setJBossModulesJar(findJBossModulesJar().getAbsolutePath());
+        forkConfiguration.setLogModule(logModule);
+        forkConfiguration.setLogConfiguration(logConfiguration);
         
         StringBuilder sb = new StringBuilder();
         for (Iterator it = roots.iterator() ; it.hasNext() ; ) {
@@ -1374,9 +1393,6 @@ public class SurefirePlugin
         return super.processForkConfiguration(forkConfiguration);
     }
 
-    /////////////////////////////////////////////////////////////
-    //JBoss modules specific methods
-    
     void createJBossModulesDirectory() throws MojoExecutionException {
         ModulesProcessor processor = new ModulesProcessor(
                 getLog(), 
