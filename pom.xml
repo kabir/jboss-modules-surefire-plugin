@@ -21,10 +21,15 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
+    <groupId>org.jboss</groupId>
+    <artifactId>jboss-parent</artifactId>
+    <version>5</version>
+    <!--
     <artifactId>maven-parent</artifactId>
     <groupId>org.apache.maven</groupId>
     <version>16</version>
     <relativePath>../pom/maven/pom.xml</relativePath>
+    -->
   </parent>
 
   <groupId>org.jboss.maven.surefire.modular</groupId>
@@ -38,6 +43,7 @@
   <inceptionYear>2004</inceptionYear>
   
   <properties>
+    <!-- JBoss properties -->
     <version.junit.junit>4.8.1</version.junit.junit>
     <version.jboss.modules>1.0.0.Beta9</version.jboss.modules>
   </properties>
@@ -98,6 +104,7 @@
     <module>test</module>
   </modules>
 
+  <!--
   <scm>
     <connection>scm:svn:http://svn.apache.org/repos/asf/maven/surefire/tags/surefire-2.6</connection>
     <developerConnection>scm:svn:https://svn.apache.org/repos/asf/maven/surefire/tags/surefire-2.6</developerConnection>
@@ -107,6 +114,7 @@
     <system>jira</system>
     <url>http://jira.codehaus.org/browse/SUREFIRE</url>
   </issueManagement>
+  -->
 
   <dependencyManagement>
     <dependencies>
