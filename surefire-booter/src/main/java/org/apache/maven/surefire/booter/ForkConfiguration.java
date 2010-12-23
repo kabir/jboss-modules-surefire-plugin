@@ -77,6 +77,8 @@ public class ForkConfiguration
     private File logConfiguration;
     
     private String jbossModuleRoots;
+    
+    private boolean arquillianAs;
 
     public void setForkMode( String forkMode )
     {
@@ -147,6 +149,10 @@ public class ForkConfiguration
 
     public void setJBossModuleRoots(String jbossModuleRoots) {
         this.jbossModuleRoots = jbossModuleRoots;
+    }
+    
+    public void setArquillianAs(boolean arquillianAs) {
+        this.arquillianAs = arquillianAs;
     }
     
     public void setEnvironmentVariables( Map environmentVariables )
@@ -251,6 +257,10 @@ public class ForkConfiguration
         if (systemProperties != null && systemProperties.containsKey("org.jboss.boot.log.file")) {
             cli.createArg().setValue("-Dorg.jboss.boot.log.file=" + systemProperties.getProperty("org.jboss.boot.log.file"));
         }
+        if (arquillianAs) {
+            cli.createArg().setValue("-Dorg.jboss.arquillian.modular=true");
+        }
+        
         
         cli.createArg().setValue("-jar");
         cli.createArg().setValue(jbossModulesJar);

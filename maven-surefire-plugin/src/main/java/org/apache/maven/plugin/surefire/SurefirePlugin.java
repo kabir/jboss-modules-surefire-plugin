@@ -54,6 +54,11 @@ import org.codehaus.plexus.util.StringUtils;
 
 /**
  * Run tests using Surefire.
+ * This is a fork of org.apache.maven.plugins:maven-surefire-plugin:2.6:test.
+ * 
+ * It has the configuration options of the 'real' surefire plugin (http://maven.apache.org/plugins/maven-surefire-plugin/test-mojo.html), 
+ * although your mileage may vary if you start playing with the fork modes. The plugin takes a module definition file and creates a directory structure 
+ * containing modules in the jboss-modules format.
  *
  * @author Jason van Zyl
  * @version $Id: SurefirePlugin.java 981261 2010-08-01 16:26:10Z bentmann $
@@ -590,37 +595,41 @@ public class SurefirePlugin
     private boolean cleanModulesDirectory;
     
     /**
-     * The absolute path of the modules output directory created from {@link #moduleDefinitionFile}. The default is target/modules under outputDirectory
+     * The absolute path of the modules output directory created from {@link #moduleDefinitionFile}.
      *
      * @parameter expression="${jboss.modules.directory}" default-value="${project.build.directory}/modules"
      */
     private File modulesDirectory;
     
     /**
-     * The name of the -logmodule parameter to JBoss Modules if any
+     * The name of the -logmodule parameter passes in to JBoss Modules (i.e. the name of the module containg the jboss logmanager). This is needed if the target project uses 
+     * java.util.Logging or jboss logging, and the jboss log manager is not on the system classpath.
      * 
      * @parameter expression="${jboss.modules.logmodule}"
      */
     private String logModule;
     
     /**
-     * The JBoss logging configuration if any. This must be set if the target project uses jboss logging
+     * The JBoss logging configuration if any. This must be set if the target project uses jboss logging and you want any output to be displayed
      * 
-     * @parameter expression="${logging.configuration}
+     * @parameter expression="${logging.configuration}"
      */
     private File logConfiguration;
     
     /**
-     * <p>
      * The path of the module definition file.
-     * </p>
-     * <p>
-     * The default is under target/test-classes/modules/module-def.xml.
-
+     *
      * @parameter expression="${jboss.modules.definition}" default-value="${project.build.testOutputDirectory}/modules/module-def.xml"
      * @required
      */
     private File moduleDefinitionFile;
+
+    /**
+     * True if we are running a JBoss AS instance in arquillian
+     * 
+     * @parameter  
+     */
+    private boolean arquillianAs;
 
     /**
      * The artifact collector to use.
@@ -639,7 +648,6 @@ public class SurefirePlugin
      * @readonly
      */
     private DependencyTreeBuilder dependencyTreeBuilder;
-
 
     public void execute()
         throws MojoExecutionException, MojoFailureException
@@ -1389,6 +1397,7 @@ public class SurefirePlugin
         sb.insert(0, modulesDirectory);
         
         forkConfiguration.setJBossModuleRoots(sb.toString());
+        forkConfiguration.setArquillianAs(arquillianAs);
         
         return super.processForkConfiguration(forkConfiguration);
     }
@@ -1406,7 +1415,8 @@ public class SurefirePlugin
                 moduleDefinitionFile,
                 cleanModulesDirectory,
                 modulesDirectory, 
-                dependencyTreeBuilder);
+                dependencyTreeBuilder,
+                arquillianAs);
         
         processor.createModulesDirectory();
     }    

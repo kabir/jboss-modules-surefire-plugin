@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,11 +88,14 @@ public class ModulesProcessor {
 
     private final DependencyTreeBuilder dependencyTreeBuilder;
     
+    private final boolean arquillianAs; 
+    
     private final Map<String, Artifact> dependencyArtifacts = new HashMap<String, Artifact>();
 
     public ModulesProcessor(Log log, MavenProject project, ArtifactRepository localRepository, ArtifactFactory artifactFactory,
             ArtifactMetadataSource metadataSource, ArtifactCollector artifactCollector, File testClassesDirectory, File classesDirectory,
-            File moduleDefinitionFile, boolean cleanModulesDirectory, File modulesDirectory, DependencyTreeBuilder dependencyTreeBuilder) {
+            File moduleDefinitionFile, boolean cleanModulesDirectory, File modulesDirectory, DependencyTreeBuilder dependencyTreeBuilder,
+            boolean arquillianAs) {
         this.log = log;
         this.project = project;
         this.localRepository = localRepository;
@@ -104,6 +108,7 @@ public class ModulesProcessor {
         this.cleanModulesDirectory = cleanModulesDirectory;
         this.modulesDirectory = modulesDirectory;
         this.dependencyTreeBuilder = dependencyTreeBuilder;
+        this.arquillianAs = arquillianAs;
     }
 
 
@@ -169,7 +174,9 @@ public class ModulesProcessor {
         ModulesParser parser = new ModulesParser(moduleDefinitionFile);
         List<Module> modules = parser.parse();
         
-        processModule(createSurefireModule(parser));
+        for (Module module : createSurefireModules(parser)) {
+            processModule(module);    
+        }
         
         for (Module module : modules) {
             processModule(module);
@@ -188,50 +195,7 @@ public class ModulesProcessor {
         }
         module.output(moduleDir);
     }
-
-    private Module createSurefireModule(ModulesParser parser) {
-        if (!"urn:jboss:module:1.0".equals(parser.getJBossModulesNamespaceUri())) {
-            throw new IllegalArgumentException("Invalid jboss modules version");
-        }
-        Module module = new Module(parser.getJBossModulesNamespaceUri());
-        module.addAttribute("name", "jboss.surefire.module");
-        
-        ChildElement mainClass = new ChildElement("main-class");
-        mainClass.addAttribute("name", SurefireBooter.class.getName());
-        module.addChild(mainClass);
-        
-        ChildElement resources = new ChildElement("resources");
-        addSurefireModuleResource(resources, "$org.apache.maven.surefire:surefire-api$");
-        addSurefireModuleResource(resources, "$org.jboss.maven.surefire.modular:surefire-booter$");
-        addSurefireModuleResource(resources, "$junit:junit$");
-        if (classesDirectory.exists()) {
-            addSurefireModuleResource(resources, "$$CLASSES$$");
-        }
-        if (testClassesDirectory.exists()) {
-            addSurefireModuleResource(resources, "$$TEST.CLASSES$$");
-        }
-        module.addChild(resources);
-        
-        if (parser.getTestModuleDependencies() != null) {
-            if (parser.getTestModuleDependencies().getChildren() != null) {
-                ChildElement deps = new ChildElement("dependencies");
-                for (ChildElement dep : parser.getTestModuleDependencies().getChildren()) {
-                    deps.addChild(dep);
-                }
-                module.addChild(deps);
-            }
-        }
-
-        return module;
-    }
     
-    
-    private void addSurefireModuleResource(ChildElement surefireModuleResources, String placeholder) {
-        ChildElement resource = new ChildElement("resource-root");
-        resource.addAttribute("path", placeholder);
-        surefireModuleResources.addChild(resource);
-    }
-
     private File createModuleDirectory(String name) {
         String path = name.replace('.', File.separatorChar) + File.separator + "main";
         File file = new File(modulesDirectory, path);
@@ -242,6 +206,16 @@ public class ModulesProcessor {
         return file;
     }
 
+
+    private List<Module> createSurefireModules(ModulesParser parser) {
+        if (!"urn:jboss:module:1.0".equals(parser.getJBossModulesNamespaceUri())) {
+            throw new IllegalArgumentException("Invalid jboss modules version");
+        }
+        SurefireModulesCreator creator = arquillianAs ? new ArquillianSurefireModules_1_0_Creator() : new PlainSurefireModules_1_0_Creator();
+        return creator.createSurefireModules(parser);
+    }
+    
+    
     private File copyMavenArtifact(File moduleDir, MavenReplacement replacement) {
         String mavenName = replacement.getAttributeValue();
         log.debug("Searching for artifact " + mavenName);
@@ -386,4 +360,120 @@ public class ModulesProcessor {
 
     }
     
+    private abstract class SurefireModulesCreator {
+        abstract List<Module> createSurefireModules(ModulesParser parser);        
+
+    
+        void addResource(ChildElement resources, String placeholder) {
+            ChildElement resource = new ChildElement("resource-root");
+            resource.addAttribute("path", placeholder);
+            resources.addChild(resource);
+        }
+    }
+    
+    private class PlainSurefireModules_1_0_Creator extends SurefireModulesCreator {
+
+        @Override
+        List<Module> createSurefireModules(ModulesParser parser) {
+            Module module = new Module(parser.getJBossModulesNamespaceUri());
+            module.addAttribute("name", "jboss.surefire.module");
+            
+            ChildElement mainClass = new ChildElement("main-class");
+            mainClass.addAttribute("name", SurefireBooter.class.getName());
+            module.addChild(mainClass);
+            
+            ChildElement resources = new ChildElement("resources");
+            addResource(resources, "$org.apache.maven.surefire:surefire-api$");
+            addResource(resources, "$org.jboss.maven.surefire.modular:surefire-booter$");
+            addResource(resources, "$junit:junit$");
+            if (classesDirectory.exists()) {
+                addResource(resources, "$$CLASSES$$");
+            }
+            if (testClassesDirectory.exists()) {
+                addResource(resources, "$$TEST.CLASSES$$");
+            }
+            module.addChild(resources);
+            
+            if (parser.getTestModuleDependencies() != null) {
+                if (parser.getTestModuleDependencies().getChildren() != null) {
+                    ChildElement deps = new ChildElement("dependencies");
+                    for (ChildElement dep : parser.getTestModuleDependencies().getChildren()) {
+                        deps.addChild(dep);
+                    }
+                    module.addChild(deps);
+                }
+            }
+
+            return Collections.singletonList(module);
+        }
+    }
+    
+    private class ArquillianSurefireModules_1_0_Creator extends SurefireModulesCreator {
+
+        @Override
+        List<Module> createSurefireModules(ModulesParser parser) {
+            List<Module> modules = new ArrayList<Module>();
+            modules.add(createSurefireModule(parser));
+            return modules;
+        }
+
+        private Module createSurefireModule(ModulesParser parser) {
+            Module module = new Module(parser.getJBossModulesNamespaceUri());
+            module.addAttribute("name", "jboss.surefire.module");
+            
+            ChildElement mainClass = new ChildElement("main-class");
+            mainClass.addAttribute("name", SurefireBooter.class.getName());
+            module.addChild(mainClass);
+            
+            ChildElement resources = new ChildElement("resources");
+            addResource(resources, "$org.apache.maven.surefire:surefire-api$");
+            addResource(resources, "$org.jboss.maven.surefire.modular:surefire-booter$");
+            addResource(resources, "$org.jboss.as:jboss-as-arquillian-container-embedded$");
+            addResource(resources, "$org.jboss.as:jboss-as-arquillian-container-common$");
+            if (classesDirectory.exists()) {
+                addResource(resources, "$$CLASSES$$");
+            }
+            if (testClassesDirectory.exists()) {
+                addResource(resources, "$$TEST.CLASSES$$");
+            }
+            module.addChild(resources);
+            
+            ChildElement deps = new ChildElement("dependencies");
+            module.addChild(deps);
+            if (parser.getTestModuleDependencies() != null) {
+                for (ChildElement dep : parser.getTestModuleDependencies().getChildren()) {
+                    deps.addChild(dep);
+                }
+            }
+            addDependency(deps, "junit.junit");
+            addDependency(deps, "org.jboss.arquillian.api");
+            addDependency(deps, "org.jboss.arquillian.protocol.jmx");
+            addDependency(deps, "org.jboss.arquillian.protocol.osgi");
+            addDependency(deps, "org.jboss.arquillian.spi");
+            addDependency(deps, "org.jboss.arquillian.testenricher.msc");
+            addDependency(deps, "org.jboss.arquillian.testenricher.osgi");
+            addDependency(deps, "org.jboss.as.standalone-client");
+            addDependency(deps, "org.jboss.as.jmx");
+            addDependency(deps, "org.osgi.core");
+            addDependency(deps, "org.jboss.osgi.spi");
+            addDependency(deps, "org.jboss.as.server");
+            addDependency(deps, "org.jboss.arquillian.junit");
+            addDependency(deps, "org.jboss.marshalling.river");
+            addDependency(deps, "javax.inject.api");
+            addDependency(deps, "javax.api");
+            addDependency(deps, "org.jboss.shrinkwrap.api");
+            //Needed for Shrinkwraps TCC:
+            addDependency(deps, "org.jboss.shrinkwrap.impl").addAttribute("services", "import");
+            
+            return module;
+        }
+        
+    }
+    
+    private ChildElement addDependency(ChildElement deps, String depName) {
+        ChildElement dep = new ChildElement("module");
+        dep.addAttribute("name", depName);
+        deps.addChild(dep);
+        return dep;
+    }
 }
