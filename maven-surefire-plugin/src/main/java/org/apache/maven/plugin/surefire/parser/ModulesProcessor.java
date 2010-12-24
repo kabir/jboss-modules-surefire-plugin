@@ -452,7 +452,7 @@ public class ModulesProcessor {
             addDependency(deps, "org.jboss.arquillian.spi");
             addDependency(deps, "org.jboss.arquillian.testenricher.msc");
             addDependency(deps, "org.jboss.arquillian.testenricher.osgi");
-            addDependency(deps, "org.jboss.as.standalone-client");
+            //addDependency(deps, "org.jboss.as.standalone-client");
             addDependency(deps, "org.jboss.as.jmx");
             addDependency(deps, "org.osgi.core");
             addDependency(deps, "org.jboss.osgi.spi");
