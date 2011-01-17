@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -259,6 +260,9 @@ public class ForkConfiguration
         }
         if (arquillianAs) {
             cli.createArg().setValue("-Dorg.jboss.arquillian.modular=true");
+            if (systemProperties.containsKey("jboss.home.dir")) {
+                cli.createArg().setValue("-Djboss.home=" + systemProperties.getProperty("jboss.home.dir"));
+            }
         }
         
         
@@ -272,6 +276,8 @@ public class ForkConfiguration
         }
         cli.createArg().setValue("jboss.surefire.module");
         cli.setWorkingDirectory( workingDirectory.getAbsolutePath() );
+        
+        System.out.println(Arrays.toString(cli.getArguments()));
 
         return cli;
     }

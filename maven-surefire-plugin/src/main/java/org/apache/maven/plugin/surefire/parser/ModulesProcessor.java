@@ -445,6 +445,8 @@ public class ModulesProcessor {
                     deps.addChild(dep);
                 }
             }
+            
+            //This is ugly, maybe it makes sense to make this configurable in AS?
             addDependency(deps, "junit.junit");
             addDependency(deps, "org.jboss.arquillian.api");
             addDependency(deps, "org.jboss.arquillian.protocol.jmx");
@@ -452,7 +454,6 @@ public class ModulesProcessor {
             addDependency(deps, "org.jboss.arquillian.spi");
             addDependency(deps, "org.jboss.arquillian.testenricher.msc");
             addDependency(deps, "org.jboss.arquillian.testenricher.osgi");
-            //addDependency(deps, "org.jboss.as.standalone-client");
             addDependency(deps, "org.jboss.as.jmx");
             addDependency(deps, "org.osgi.core");
             addDependency(deps, "org.jboss.osgi.spi");
