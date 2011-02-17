@@ -463,7 +463,7 @@ public class ModulesProcessor {
             addDependency(deps, "javax.inject.api");
             addDependency(deps, "javax.api");
             addDependency(deps, "org.jboss.shrinkwrap.api");
-            //Needed for Shrinkwraps TCC:
+            //Needed for Shrinkwraps TCCL:
             addDependency(deps, "org.jboss.shrinkwrap.impl").addAttribute("services", "import");
             
             return module;

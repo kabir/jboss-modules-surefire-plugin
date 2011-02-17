@@ -79,8 +79,6 @@ public class ForkConfiguration
     
     private String jbossModuleRoots;
     
-    private boolean arquillianAs;
-
     public void setForkMode( String forkMode )
     {
         if ( "pertest".equalsIgnoreCase( forkMode ) )
@@ -150,10 +148,6 @@ public class ForkConfiguration
 
     public void setJBossModuleRoots(String jbossModuleRoots) {
         this.jbossModuleRoots = jbossModuleRoots;
-    }
-    
-    public void setArquillianAs(boolean arquillianAs) {
-        this.arquillianAs = arquillianAs;
     }
     
     public void setEnvironmentVariables( Map environmentVariables )
@@ -258,11 +252,9 @@ public class ForkConfiguration
         if (systemProperties != null && systemProperties.containsKey("org.jboss.boot.log.file")) {
             cli.createArg().setValue("-Dorg.jboss.boot.log.file=" + systemProperties.getProperty("org.jboss.boot.log.file"));
         }
-        if (arquillianAs) {
-            cli.createArg().setValue("-Dorg.jboss.arquillian.modular=true");
-            if (systemProperties.containsKey("jboss.home.dir")) {
-                cli.createArg().setValue("-Djboss.home=" + systemProperties.getProperty("jboss.home.dir"));
-            }
+        cli.createArg().setValue("-Dorg.jboss.surefire.modular=true");
+        if (systemProperties != null && systemProperties.containsKey("jboss.home.dir")) {
+            cli.createArg().setValue("-Djboss.home=" + systemProperties.getProperty("jboss.home.dir"));
         }
         
         

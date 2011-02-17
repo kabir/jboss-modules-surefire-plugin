@@ -1397,7 +1397,6 @@ public class SurefirePlugin
         sb.insert(0, modulesDirectory);
         
         forkConfiguration.setJBossModuleRoots(sb.toString());
-        forkConfiguration.setArquillianAs(arquillianAs);
         
         return super.processForkConfiguration(forkConfiguration);
     }

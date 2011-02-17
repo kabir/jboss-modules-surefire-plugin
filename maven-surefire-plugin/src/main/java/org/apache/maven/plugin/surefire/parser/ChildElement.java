@@ -26,9 +26,13 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  *
@@ -38,7 +42,7 @@ import java.util.Set;
 class ChildElement {
     private final String name;
 
-    private final Map<String, String> attributes = new HashMap<String, String>();
+    private final Map<String, String> attributes = new LinkedHashMap<String, String>();
     private final List<ChildElement> children = new ArrayList<ChildElement>();
     private final Set<String> replacementAttributes = new HashSet<String>();
 
@@ -79,26 +83,38 @@ class ChildElement {
         }
     }
 
-    void output(PrintWriter writer, int indent) throws IOException {
-        indent(writer, indent);
-        writer.print("<" + name);
+    void output(XMLStreamWriter writer) throws XMLStreamException {
+        String ns = getNamespaceUri();
+        boolean hasChildren = children.size() > 0;
+        
+        if (hasChildren) {
+            if (ns != null) {
+                writer.writeStartElement("", name, ns);
+                writer.writeNamespace("", ns);
+            } else {
+                writer.writeStartElement(name);
+            }
+        } else {
+            if (ns != null) {
+                writer.writeEmptyElement("", name, ns);
+                writer.writeNamespace("", ns);
+            } else {
+                writer.writeEmptyElement(name);
+            }
+        }
+
         if (attributes.size() > 0) {
             for (Map.Entry<String, String> attribute : attributes.entrySet()) {
-                writer.print(" " + attribute.getKey() + "=\"" + attribute.getValue() + "\"");
+                writer.writeAttribute(attribute.getKey(), attribute.getValue());
             }
         }
         
-        printNamespaceUri(writer);
-        
-        if (children.size() == 0) {
-            writer.println("/>");
-        } else {
-            writer.println(">");
+        if (hasChildren) {
             for (ChildElement child : children) {
-                child.output(writer, indent + 1);
+                child.output(writer);
             }
-            indent(writer, indent);
-            writer.println("</" + name + ">");
+            
+            writer.writeEndElement();
         }
     }
 
@@ -108,6 +124,7 @@ class ChildElement {
         }
     }
     
-    void printNamespaceUri(PrintWriter writer) {
+    String getNamespaceUri() {
+        return null;
     }
 }

@@ -21,10 +21,16 @@
  */
 package org.apache.maven.plugin.surefire.parser;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+
+import javax.xml.namespace.NamespaceContext;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  *
@@ -56,18 +62,24 @@ public class Module extends ChildElement {
             file.delete();
         }
 
-        PrintWriter writer;
+        final OutputStream out;
         try {
-            writer = new PrintWriter(file);
+            out = new BufferedOutputStream(new FileOutputStream(file));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-
+        XMLStreamWriter writer;
         try {
-            writer.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-            output(writer, 0);
-        } catch (IOException e) {
-
+            writer = new SimpleFormattingWriter(XMLOutputFactory.newInstance().createXMLStreamWriter(out));
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
+        }
+        
+        try {
+            writer.writeStartDocument();
+            output(writer);
+        } catch (XMLStreamException e) {
+            throw new RuntimeException(e);
         } finally {
             try {
                 writer.close();
@@ -76,7 +88,166 @@ public class Module extends ChildElement {
         }
     }
 
-    void printNamespaceUri(PrintWriter writer) {
-        writer.print(" xmlns=\"" + namespaceUri + "\"");
+    @Override
+    String getNamespaceUri() {
+        return namespaceUri;
+    }
+ 
+    private static class SimpleFormattingWriter implements XMLStreamWriter {
+        final XMLStreamWriter delegate;
+        int indent;
+        
+        public SimpleFormattingWriter(XMLStreamWriter delegate) {
+            this.delegate = delegate;
+        }
+
+        public void writeStartElement(String localName) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeStartElement(localName);
+            indent++;
+        }
+
+        public void writeStartElement(String namespaceURI, String localName) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeStartElement(namespaceURI, localName);
+            indent++;
+        }
+
+        public void writeStartElement(String prefix, String localName, String namespaceURI) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeStartElement(prefix, localName, namespaceURI);
+            indent++;
+        }
+
+        public void writeEmptyElement(String namespaceURI, String localName) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeEmptyElement(namespaceURI, localName);
+        }
+
+        public void writeEmptyElement(String prefix, String localName, String namespaceURI) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeEmptyElement(prefix, localName, namespaceURI);
+        }
+
+        public void writeEmptyElement(String localName) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeEmptyElement(localName);
+        }
+
+        public void writeEndElement() throws XMLStreamException {
+            indent--;
+            writeNewLine();
+            delegate.writeEndElement();
+        }
+
+        public void writeEndDocument() throws XMLStreamException {
+            writeNewLine();
+            delegate.writeEndDocument();
+        }
+
+        public void close() throws XMLStreamException {
+            delegate.close();
+        }
+
+        public void flush() throws XMLStreamException {
+            delegate.flush();
+        }
+
+        public void writeAttribute(String localName, String value) throws XMLStreamException {
+            delegate.writeAttribute(localName, value);
+        }
+
+        public void writeAttribute(String prefix, String namespaceURI, String localName, String value) throws XMLStreamException {
+            delegate.writeAttribute(prefix, namespaceURI, localName, value);
+        }
+
+        public void writeAttribute(String namespaceURI, String localName, String value) throws XMLStreamException {
+            delegate.writeAttribute(namespaceURI, localName, value);
+        }
+
+        public void writeNamespace(String prefix, String namespaceURI) throws XMLStreamException {
+            delegate.writeNamespace(prefix, namespaceURI);
+        }
+
+        public void writeDefaultNamespace(String namespaceURI) throws XMLStreamException {
+            delegate.writeDefaultNamespace(namespaceURI);
+        }
+
+        public void writeComment(String data) throws XMLStreamException {
+            delegate.writeComment(data);
+        }
+
+        public void writeProcessingInstruction(String target) throws XMLStreamException {
+            delegate.writeProcessingInstruction(target);
+        }
+
+        public void writeProcessingInstruction(String target, String data) throws XMLStreamException {
+            delegate.writeProcessingInstruction(target, data);
+        }
+
+        public void writeCData(String data) throws XMLStreamException {
+            delegate.writeCData(data);
+        }
+
+        public void writeDTD(String dtd) throws XMLStreamException {
+            delegate.writeDTD(dtd);
+        }
+
+        public void writeEntityRef(String name) throws XMLStreamException {
+            delegate.writeEntityRef(name);
+        }
+
+        public void writeStartDocument() throws XMLStreamException {
+            delegate.writeStartDocument();
+        }
+
+        public void writeStartDocument(String version) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeStartDocument(version);
+        }
+
+        public void writeStartDocument(String encoding, String version) throws XMLStreamException {
+            writeNewLine();
+            delegate.writeStartDocument(encoding, version);
+        }
+
+        public void writeCharacters(String text) throws XMLStreamException {
+            delegate.writeCharacters(text);
+        }
+
+        public void writeCharacters(char[] text, int start, int len) throws XMLStreamException {
+            delegate.writeCharacters(text, start, len);
+        }
+
+        public String getPrefix(String uri) throws XMLStreamException {
+            return delegate.getPrefix(uri);
+        }
+
+        public void setPrefix(String prefix, String uri) throws XMLStreamException {
+            delegate.setPrefix(prefix, uri);
+        }
+
+        public void setDefaultNamespace(String uri) throws XMLStreamException {
+            delegate.setDefaultNamespace(uri);
+        }
+
+        public void setNamespaceContext(NamespaceContext context) throws XMLStreamException {
+            delegate.setNamespaceContext(context);
+        }
+
+        public NamespaceContext getNamespaceContext() {
+            return delegate.getNamespaceContext();
+        }
+
+        public Object getProperty(String name) throws IllegalArgumentException {
+            return delegate.getProperty(name);
+        }
+        
+        private void writeNewLine() throws XMLStreamException {
+            delegate.writeCharacters("\n");
+            for (int i = 0 ; i < indent ; i++) {
+                delegate.writeCharacters("    ");
+            }
+        }
     }
 }
