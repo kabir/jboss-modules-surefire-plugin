@@ -54,9 +54,11 @@ public class ModulesParser {
     private static final String NAMESPACE = "urn:jboss:surefire-module:1.0";
     private String targetNamespaceUri;
     private TestModuleDependencies testModuleDependencies;
+    private TestModuleResources testModuleResources;
 
     enum Element {
         MODULES,
+        TEST_MODULE_RESOURCES,
         TEST_MODULE_DEPENDENCIES,
         MODULE,
         
@@ -68,6 +70,7 @@ public class ModulesParser {
         static {
             Map<QName, Element> elementsMap = new HashMap<QName, Element>();
             elementsMap.put(new QName(NAMESPACE, "modules"), Element.MODULES);
+            elementsMap.put(new QName(NAMESPACE, "test-module-resources"), Element.TEST_MODULE_RESOURCES);
             elementsMap.put(new QName(NAMESPACE, "test-module-dependencies"), Element.TEST_MODULE_DEPENDENCIES);
             elementsMap.put(new QName(NAMESPACE, "module"), Element.MODULE);
             elements = elementsMap;
@@ -127,6 +130,10 @@ public class ModulesParser {
     TestModuleDependencies getTestModuleDependencies() {
         return testModuleDependencies;
     }
+    
+    TestModuleResources getTestModuleResources() {
+        return testModuleResources;
+    }
 
     private static void setIfSupported(XMLInputFactory inputFactory, String property, Object value) {
         if (inputFactory.isPropertySupported(property)) {
@@ -173,6 +180,7 @@ public class ModulesParser {
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.START_ELEMENT:
+                    Element element = Element.of(reader.getName());
                     if (Element.of(reader.getName()) != Element.MODULES) {
                         throw unexpectedContent(reader);
                     }
@@ -228,6 +236,13 @@ public class ModulesParser {
                     }
                     testModuleDependencies = new TestModuleDependencies();
                     parseChildElement(reader.getName(), testModuleDependencies, reader);
+                    break;
+                case TEST_MODULE_RESOURCES:
+                    if (testModuleResources != null) {
+                        throw new XMLStreamException("There already was a " + reader.getName() + " entry", reader.getLocation());
+                    }
+                    testModuleResources = new TestModuleResources();
+                    parseChildElement(reader.getName(), testModuleResources, reader);
                     break;
                 default:
                     throw unexpectedContent(reader);

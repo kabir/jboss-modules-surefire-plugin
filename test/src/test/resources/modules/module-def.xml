@@ -7,17 +7,30 @@
            <resources>
                <resource-root path="$org.apache.maven.surefire:surefire-api$"/>
                <resource-root path="$org.jboss.maven.surefire.modular:surefire-booter$"/>
-               <resource-root path="$junit:junit$"/>>
-               <resource-root path="$$CLASSES$$"/>
-               <resource-root path="$$TEST.CLASSES$$"/>
            </resources>
        </module>
+       
+       To add more resources add a
+       <test-resource-resources>
+           <resource-root path="$junit:junit$"/>>  
+           <resource-root path="$$CLASSES$$"/>
+           <resource-root path="$$TEST.CLASSES$$"/>
+       </test-resource-resources>
+     
+       To add dependencies to the module add a section
+       <test-resource-dependencies>
+           <module name="$groupId:artifactId$"/>>       
+       </test-resource-dependencies>
+       
        
        $groupId:artifactId$ gets the dependency jar from maven using the version used by the project using this plugin
        $$CLASS$$ is the target/classes directory of the project using this plugin
        $$TEST.CLASSES$$ is the target/test-classes directory of the project using this plugin
     -->
-       
+   <test-module-resources>
+       <resource-root path="$junit:junit$"/>
+       <resource-root path="$$TEST.CLASSES$$"/>
+   </test-module-resources>
    <test-module-dependencies>
        <module name="org.jboss.logging.test"/>
    </test-module-dependencies>
