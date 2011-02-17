@@ -211,10 +211,41 @@ public class ModulesProcessor {
         if (!"urn:jboss:module:1.0".equals(parser.getJBossModulesNamespaceUri())) {
             throw new IllegalArgumentException("Invalid jboss modules version");
         }
-        SurefireModulesCreator creator = arquillianAs ? new ArquillianSurefireModules_1_0_Creator() : new PlainSurefireModules_1_0_Creator();
-        return creator.createSurefireModules(parser);
-    }
-    
+     
+        Module module = new Module(parser.getJBossModulesNamespaceUri());
+        module.addAttribute("name", "jboss.surefire.module");
+        
+        ChildElement mainClass = new ChildElement("main-class");
+        mainClass.addAttribute("name", SurefireBooter.class.getName());
+        module.addChild(mainClass);
+        
+        ChildElement resources = new ChildElement("resources");
+        addResource(resources, "$org.apache.maven.surefire:surefire-api$");
+        addResource(resources, "$org.jboss.maven.surefire.modular:surefire-booter$");
+
+        module.addChild(resources);
+        TestModuleResources testModuleResources = parser.getTestModuleResources();
+        if (testModuleResources != null) {
+            if (testModuleResources.getChildren() != null) {
+                for (ChildElement resource : testModuleResources.getChildren()) {
+                    resources.addChild(resource);
+                }
+            }
+        }
+        
+        TestModuleDependencies testModuleDependencies = parser.getTestModuleDependencies();
+        if (testModuleDependencies != null) {
+            if (testModuleDependencies.getChildren() != null) {
+                ChildElement deps = new ChildElement("dependencies");
+                for (ChildElement dep : testModuleDependencies.getChildren()) {
+                    deps.addChild(dep);
+                }
+                module.addChild(deps);
+            }
+        }
+
+        return Collections.singletonList(module);
+    }    
     
     private File copyMavenArtifact(File moduleDir, MavenReplacement replacement) {
         String mavenName = replacement.getAttributeValue();
@@ -360,121 +391,9 @@ public class ModulesProcessor {
 
     }
     
-    private abstract class SurefireModulesCreator {
-        abstract List<Module> createSurefireModules(ModulesParser parser);        
-
-    
-        void addResource(ChildElement resources, String placeholder) {
-            ChildElement resource = new ChildElement("resource-root");
-            resource.addAttribute("path", placeholder);
-            resources.addChild(resource);
-        }
-    }
-    
-    private class PlainSurefireModules_1_0_Creator extends SurefireModulesCreator {
-
-        @Override
-        List<Module> createSurefireModules(ModulesParser parser) {
-            Module module = new Module(parser.getJBossModulesNamespaceUri());
-            module.addAttribute("name", "jboss.surefire.module");
-            
-            ChildElement mainClass = new ChildElement("main-class");
-            mainClass.addAttribute("name", SurefireBooter.class.getName());
-            module.addChild(mainClass);
-            
-            ChildElement resources = new ChildElement("resources");
-            addResource(resources, "$org.apache.maven.surefire:surefire-api$");
-            addResource(resources, "$org.jboss.maven.surefire.modular:surefire-booter$");
-            addResource(resources, "$junit:junit$");
-            if (classesDirectory.exists()) {
-                addResource(resources, "$$CLASSES$$");
-            }
-            if (testClassesDirectory.exists()) {
-                addResource(resources, "$$TEST.CLASSES$$");
-            }
-            module.addChild(resources);
-            
-            if (parser.getTestModuleDependencies() != null) {
-                if (parser.getTestModuleDependencies().getChildren() != null) {
-                    ChildElement deps = new ChildElement("dependencies");
-                    for (ChildElement dep : parser.getTestModuleDependencies().getChildren()) {
-                        deps.addChild(dep);
-                    }
-                    module.addChild(deps);
-                }
-            }
-
-            return Collections.singletonList(module);
-        }
-    }
-    
-    private class ArquillianSurefireModules_1_0_Creator extends SurefireModulesCreator {
-
-        @Override
-        List<Module> createSurefireModules(ModulesParser parser) {
-            List<Module> modules = new ArrayList<Module>();
-            modules.add(createSurefireModule(parser));
-            return modules;
-        }
-
-        private Module createSurefireModule(ModulesParser parser) {
-            Module module = new Module(parser.getJBossModulesNamespaceUri());
-            module.addAttribute("name", "jboss.surefire.module");
-            
-            ChildElement mainClass = new ChildElement("main-class");
-            mainClass.addAttribute("name", SurefireBooter.class.getName());
-            module.addChild(mainClass);
-            
-            ChildElement resources = new ChildElement("resources");
-            addResource(resources, "$org.apache.maven.surefire:surefire-api$");
-            addResource(resources, "$org.jboss.maven.surefire.modular:surefire-booter$");
-            addResource(resources, "$org.jboss.as:jboss-as-arquillian-container-embedded$");
-            addResource(resources, "$org.jboss.as:jboss-as-arquillian-container-common$");
-            if (classesDirectory.exists()) {
-                addResource(resources, "$$CLASSES$$");
-            }
-            if (testClassesDirectory.exists()) {
-                addResource(resources, "$$TEST.CLASSES$$");
-            }
-            module.addChild(resources);
-            
-            ChildElement deps = new ChildElement("dependencies");
-            module.addChild(deps);
-            if (parser.getTestModuleDependencies() != null) {
-                for (ChildElement dep : parser.getTestModuleDependencies().getChildren()) {
-                    deps.addChild(dep);
-                }
-            }
-            
-            //This is ugly, maybe it makes sense to make this configurable in AS?
-            addDependency(deps, "junit.junit");
-            addDependency(deps, "org.jboss.arquillian.api");
-            addDependency(deps, "org.jboss.arquillian.protocol.jmx");
-            addDependency(deps, "org.jboss.arquillian.protocol.osgi");
-            addDependency(deps, "org.jboss.arquillian.spi");
-            addDependency(deps, "org.jboss.arquillian.testenricher.msc");
-            addDependency(deps, "org.jboss.arquillian.testenricher.osgi");
-            addDependency(deps, "org.jboss.as.jmx");
-            addDependency(deps, "org.osgi.core");
-            addDependency(deps, "org.jboss.osgi.spi");
-            addDependency(deps, "org.jboss.as.server");
-            addDependency(deps, "org.jboss.arquillian.junit");
-            addDependency(deps, "org.jboss.marshalling.river");
-            addDependency(deps, "javax.inject.api");
-            addDependency(deps, "javax.api");
-            addDependency(deps, "org.jboss.shrinkwrap.api");
-            //Needed for Shrinkwraps TCCL:
-            addDependency(deps, "org.jboss.shrinkwrap.impl").addAttribute("services", "import");
-            
-            return module;
-        }
-        
-    }
-    
-    private ChildElement addDependency(ChildElement deps, String depName) {
-        ChildElement dep = new ChildElement("module");
-        dep.addAttribute("name", depName);
-        deps.addChild(dep);
-        return dep;
+    private void addResource(ChildElement resources, String placeholder) {
+        ChildElement resource = new ChildElement("resource-root");
+        resource.addAttribute("path", placeholder);
+        resources.addChild(resource);
     }
 }
