@@ -625,13 +625,6 @@ public class SurefirePlugin
     private File moduleDefinitionFile;
 
     /**
-     * True if we are running a JBoss AS instance in arquillian
-     * 
-     * @parameter  
-     */
-    private boolean arquillianAs;
-
-    /**
      * The artifact collector to use.
      *
      * @component
@@ -1414,8 +1407,7 @@ public class SurefirePlugin
                 moduleDefinitionFile,
                 cleanModulesDirectory,
                 modulesDirectory, 
-                dependencyTreeBuilder,
-                arquillianAs);
+                dependencyTreeBuilder);
         
         processor.createModulesDirectory();
     }    

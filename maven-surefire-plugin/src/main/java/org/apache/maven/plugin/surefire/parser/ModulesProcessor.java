@@ -88,14 +88,11 @@ public class ModulesProcessor {
 
     private final DependencyTreeBuilder dependencyTreeBuilder;
     
-    private final boolean arquillianAs; 
-    
     private final Map<String, Artifact> dependencyArtifacts = new HashMap<String, Artifact>();
 
     public ModulesProcessor(Log log, MavenProject project, ArtifactRepository localRepository, ArtifactFactory artifactFactory,
             ArtifactMetadataSource metadataSource, ArtifactCollector artifactCollector, File testClassesDirectory, File classesDirectory,
-            File moduleDefinitionFile, boolean cleanModulesDirectory, File modulesDirectory, DependencyTreeBuilder dependencyTreeBuilder,
-            boolean arquillianAs) {
+            File moduleDefinitionFile, boolean cleanModulesDirectory, File modulesDirectory, DependencyTreeBuilder dependencyTreeBuilder) {
         this.log = log;
         this.project = project;
         this.localRepository = localRepository;
@@ -108,7 +105,6 @@ public class ModulesProcessor {
         this.cleanModulesDirectory = cleanModulesDirectory;
         this.modulesDirectory = modulesDirectory;
         this.dependencyTreeBuilder = dependencyTreeBuilder;
-        this.arquillianAs = arquillianAs;
     }
 
 
