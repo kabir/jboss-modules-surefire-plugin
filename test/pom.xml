@@ -37,6 +37,13 @@
                <!-- Remove hardcoding once done  -->
                <root>/Users/kabir/sourcecontrol/temp/thomas/jboss-as/build/target/jboss-7.0.0.Alpha2/modules</root>
             </roots>
+            <systemProperties>
+                <property>
+                  <name>jboss.arquillian.executeWithServlet</name>
+                  <value>true</value>
+                </property>
+            </systemProperties>
+            
         </configuration>
       </plugin>      
     </plugins>

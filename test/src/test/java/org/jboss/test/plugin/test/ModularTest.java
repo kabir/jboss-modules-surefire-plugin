@@ -48,4 +48,11 @@ public class ModularTest {
             //Expected since the module-def does not include a module for jboss common-core
         }
     }
+    
+    @Test
+    public void testSystemPropertiesPropagated() {
+        String value = System.getProperty("jboss.arquillian.executeWithServlet", null);
+        Assert.assertNotNull(value);
+        Assert.assertTrue(Boolean.valueOf(value));
+    }
 }
