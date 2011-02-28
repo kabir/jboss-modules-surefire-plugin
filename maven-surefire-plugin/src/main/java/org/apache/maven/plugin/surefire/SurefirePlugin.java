@@ -585,7 +585,7 @@ public class SurefirePlugin
      * 
      * @parameter
      */
-    private List<File> roots;
+    private List<String> roots;
     
     /**
      * If true (default) clean out the modules directory each time we run the tests.
@@ -1373,8 +1373,8 @@ public class SurefirePlugin
         forkConfiguration.setLogConfiguration(logConfiguration);
         
         StringBuilder sb = new StringBuilder();
-        for (Iterator it = roots.iterator() ; it.hasNext() ; ) {
-            File file = new File((String)it.next());
+        for (Iterator<String> it = roots.iterator() ; it.hasNext() ; ) {
+            File file = new File( it.next() );            
             if (!file.exists()) {
                 throw new MojoExecutionException("Roots value does not exist: " + file.getAbsolutePath());
             }
