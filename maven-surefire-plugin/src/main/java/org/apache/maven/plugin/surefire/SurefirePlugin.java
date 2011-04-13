@@ -608,7 +608,12 @@ public class SurefirePlugin
      * @parameter expression="${jboss.modules.logmodule}"
      */
     private String logModule;
-    
+
+    /**
+     * The name of the -jaxpmodule parameter passed into jboss modules.
+     */
+    private String jaxpModule;
+
     /**
      * The JBoss logging configuration if any. This must be set if the target project uses jboss logging and you want any output to be displayed
      * 
@@ -1370,6 +1375,7 @@ public class SurefirePlugin
     protected ForkConfiguration processForkConfiguration(ForkConfiguration forkConfiguration) throws MojoExecutionException {
         forkConfiguration.setJBossModulesJar(findJBossModulesJar().getAbsolutePath());
         forkConfiguration.setLogModule(logModule);
+        forkConfiguration.setJaxpModule(jaxpModule);
         forkConfiguration.setLogConfiguration(logConfiguration);
         
         StringBuilder sb = new StringBuilder();

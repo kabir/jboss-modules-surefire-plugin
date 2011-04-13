@@ -72,9 +72,11 @@ public class ForkConfiguration
     private String debugLine;
     
     private String jbossModulesJar;
-    
-    private String logModule; 
-    
+
+    private String logModule;
+
+    private String jaxpModule;
+
     private File logConfiguration;
     
     private String jbossModuleRoots;
@@ -266,9 +268,13 @@ public class ForkConfiguration
             cli.createArg().setValue("-logmodule");
             cli.createArg().setValue(logModule);
         }
+        if(jaxpModule != null) {
+            cli.createArg().setValue("-jaxpmodule");
+            cli.createArg().setValue(jaxpModule);
+        }
         cli.createArg().setValue("jboss.surefire.module");
         cli.setWorkingDirectory( workingDirectory.getAbsolutePath() );
-        
+
         System.out.println(Arrays.toString(cli.getArguments()));
 
         return cli;
@@ -332,9 +338,17 @@ public class ForkConfiguration
     {
         this.useManifestOnlyJar = useManifestOnlyJar;
     }
-    
+
     public boolean isUseManifestOnlyJar()
     {
         return useManifestOnlyJar;
+    }
+
+    public String getJaxpModule() {
+        return jaxpModule;
+    }
+
+    public void setJaxpModule(String jaxpModule) {
+        this.jaxpModule = jaxpModule;
     }
 }
